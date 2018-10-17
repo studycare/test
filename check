@@ -1,0 +1,451 @@
+<?php
+class Questions_model extends CI_Model {
+ 
+    /**
+    * Responsable for auto load the database
+    * @return void
+    */
+    public function __construct()
+    {
+        $this->load->database();
+    }
+	
+	
+    /**
+    * Fetch products data from the database
+    * possibility to mix search, filter and order
+    * @param int $manufacuture_id 
+    * @param string $search_string 
+    * @param strong $order
+    * @param string $order_type 
+    * @param int $limit_start
+    * @param int $limit_end
+    * @return array
+    */
+    public function get_insert_id($array)
+    {
+		$this->db->select('sa_questions.qst_id');
+		$this->db->from('sa_questions');
+		$this->db->where($array);
+		$query = $this->db->get();
+		return $query->result_array(); 	
+    }
+	public function get_question_details($qst_id, $user_id)
+    {	
+		$this->db->select('*');
+		$this->db->from('sa_questions as a');
+		$this->db->join('sa_subjects as b', 'b.sub_id = a.qst_subject', 'left');
+		$this->db->join('sa_subcategory as c', 'c.subcat_id = a.qst_subcategory', 'left');
+		$this->db->where('qst_id', $qst_id);
+		$this->db->where('qst_user_id', $user_id);
+		$query = $this->db->get();
+		return $query->result_array();
+    }
+	
+		
+    /**
+    * Fetch products data from the database
+    * possibility to mix search, filter and order
+    * @param int $manufacuture_id 
+    * @param string $search_string 
+    * @param strong $order
+    * @param string $order_type 
+    * @param int $limit_start
+    * @param int $limit_end
+    * @return array
+    */
+    public function get_questions($user_id, $order=null, $order_type='Asc', $limit_start, $limit_end)
+    {
+		$this->db->select('qst_id, qst_title,qst_duedate, qst_budget, qst_user_type, qst_completed, qst_status, sub_name, subcat_name, qst_type, qst_added_time, qst_price');
+		$this->db->select('COUNT(d.bid_id) AS cnt');
+		$this->db->select('SUM(e.work_status) AS workstat');
+		$this->db->from('sa_questions as a');
+		$this->db->join('sa_subjects as b', 'b.sub_id = a.qst_subject', 'left');
+		$this->db->join('sa_subcategory as c', 'c.subcat_id = a.qst_subcategory', 'left');
+		$this->db->join('sa_biddings as d', 'd.bid_qst_id = a.qst_id', 'left');
+		$this->db->join('sa_works as e', 'e.work_qst_id = a.qst_id', 'left');
+		$this->db->group_by('a.qst_id'); 
+		if($order){
+			$this->db->order_by($order, $order_type);
+		}else{
+		    $this->db->order_by('qst_id', 'Desc');
+		}
+		$this->db->limit($limit_start, $limit_end);
+		$this->db->where('qst_user_id', $user_id);
+		$this->db->where('qst_type', "bidding");
+		$this->db->where('qst_completed', "0");
+		$query = $this->db->get();
+		return $query->result_array(); 	
+    }
+	    /**
+    * Count the number of rows
+    * @param int $manufacture_id
+    * @param int $search_string
+    * @param int $order
+    * @return int
+    */
+    function count_questions($user_id)
+    {
+		$this->db->select('qst_id, qst_title,qst_duedate, qst_budget, qst_user_type, qst_completed, qst_status, sub_name, subcat_name, qst_type, qst_added_time, qst_price');
+		$this->db->select('COUNT(d.bid_id) AS cnt');
+		$this->db->select('SUM(e.work_status) AS workstat');
+		$this->db->from('sa_questions as a');
+		$this->db->join('sa_subjects as b', 'b.sub_id = a.qst_subject', 'left');
+		$this->db->join('sa_subcategory as c', 'c.subcat_id = a.qst_subcategory', 'left');
+		$this->db->join('sa_biddings as d', 'd.bid_qst_id = a.qst_id', 'left');
+		$this->db->join('sa_works as e', 'e.work_qst_id = a.qst_id', 'left');
+		$this->db->group_by('a.qst_id'); 
+		$this->db->where('qst_user_id', $user_id);
+		$this->db->where('qst_type', "bidding");
+		$this->db->where('qst_completed', "0");
+		$query = $this->db->get();
+		return $query->num_rows();
+    }
+	
+	public function get_papers($user_id, $order=null, $order_type='Asc', $limit_start, $limit_end)
+    {
+		$this->db->select('*');
+		$this->db->from('sa_questions as a');
+		$this->db->join('sa_subjects as b', 'b.sub_id = a.qst_subject', 'left');
+		$this->db->join('sa_subcategory as c', 'c.subcat_id = a.qst_subcategory', 'left');
+		$this->db->join('sa_works as d', 'd.work_qst_id = a.qst_id', 'left');
+		if($order){
+			$this->db->order_by($order, $order_type);
+		}else{
+		    $this->db->order_by('qst_id', 'Desc');
+		}
+		$this->db->limit($limit_start, $limit_end);
+		$this->db->where('qst_user_id', $user_id);
+		$this->db->where('qst_type', "paper");
+		$query = $this->db->get();
+		return $query->result_array(); 	
+    }
+	    /**
+    * Count the number of rows
+    * @param int $manufacture_id
+    * @param int $search_string
+    * @param int $order
+    * @return int
+    */
+    function count_papers($user_id)
+    {
+		$this->db->select('*');
+		$this->db->from('sa_questions as a');
+		$this->db->join('sa_subjects as b', 'b.sub_id = a.qst_subject', 'left');
+		$this->db->join('sa_subcategory as c', 'c.subcat_id = a.qst_subcategory', 'left');
+		$this->db->join('sa_works as d', 'd.work_qst_id = a.qst_id', 'left');
+		$this->db->where('qst_user_id', $user_id);
+		$this->db->where('qst_type', "paper");
+		$query = $this->db->get();
+		return $query->num_rows();
+    }
+
+	public function get_newsfeed($user_id, $order=null, $order_type='Asc', $limit_start, $limit_end)
+    {
+		$this->db->select('qst_id, qst_title,qst_duedate, qst_budget, qst_user_type, qst_completed, qst_status, sub_name, subcat_name, qst_type, qst_added_time, qst_price');
+		$this->db->select('COUNT(d.bid_id) AS cnt');
+		$this->db->select('SUM(e.work_status) AS workstat');
+		$this->db->from('sa_questions as a');
+		$this->db->join('sa_subjects as b', 'b.sub_id = a.qst_subject', 'left');
+		$this->db->join('sa_subcategory as c', 'c.subcat_id = a.qst_subcategory', 'left');
+		$this->db->join('sa_biddings as d', 'd.bid_qst_id = a.qst_id', 'left');
+		$this->db->join('sa_works as e', 'e.work_qst_id = a.qst_id', 'left');
+		$this->db->group_by('a.qst_id'); 
+		if($order){
+			$this->db->order_by($order, $order_type);
+		}else{
+		    $this->db->order_by('qst_id', 'Desc');
+		}
+		$this->db->limit($limit_start, $limit_end);
+		$this->db->where('qst_status !=', '0');
+//		$this->db->where('qst_added_time < NOW() - INTERVAL 1 MINUTE');
+                $this->db->where('qst_completed', '0');
+		$query = $this->db->get();
+		return $query->result_array(); 	
+    }
+	function count_newsfeed($user_id)
+    {
+		$this->db->select('qst_id, qst_title,qst_duedate, qst_budget, qst_user_type, qst_completed, qst_status, sub_name, subcat_name, qst_type, qst_added_time, qst_price');
+		$this->db->select('COUNT(d.bid_id) AS cnt');
+		$this->db->select('SUM(e.work_status) AS workstat');
+		$this->db->from('sa_questions as a');
+		$this->db->join('sa_subjects as b', 'b.sub_id = a.qst_subject', 'left');
+		$this->db->join('sa_subcategory as c', 'c.subcat_id = a.qst_subcategory', 'left');
+		$this->db->join('sa_biddings as d', 'd.bid_qst_id = a.qst_id', 'left');
+		$this->db->join('sa_works as e', 'e.work_qst_id = a.qst_id', 'left');
+		$this->db->group_by('a.qst_id'); 
+		$this->db->where('qst_status !=', '0');
+                $this->db->where('qst_completed', '0');
+		$query = $this->db->get();
+		return $query->num_rows();
+    }
+	public function get_biddings($user_id, $order=null, $order_type='Asc', $limit_start, $limit_end)
+    {
+		$this->db->select('*');
+		$this->db->from('sa_biddings as a');
+		$this->db->join('sa_questions as b', 'b.qst_id = a.bid_qst_id', 'left');
+		$this->db->join('sa_subjects as c', 'c.sub_id = b.qst_subject', 'left');
+		$this->db->join('sa_subcategory as d', 'd.subcat_id = b.qst_subcategory', 'left');
+		$this->db->join('sa_works as e', 'e.work_qst_id = b.qst_id', 'left');
+		if($order){
+			$this->db->order_by($order, $order_type);
+		}else{
+		    $this->db->order_by('bid_id', 'Desc');
+		}
+		$this->db->limit($limit_start, $limit_end);
+		$this->db->where('bid_user_id', $user_id);
+		$this->db->where('qst_completed', "0");
+		$query = $this->db->get();
+		return $query->result_array(); 	
+    }
+	function count_biddings($user_id)
+    {
+		$this->db->select('*');
+		$this->db->from('sa_biddings as a');
+		$this->db->join('sa_questions as b', 'b.qst_id = a.bid_qst_id', 'left');
+		$this->db->join('sa_subjects as c', 'c.sub_id = b.qst_subject', 'left');
+		$this->db->join('sa_subcategory as d', 'd.subcat_id = b.qst_subcategory', 'left');
+		$this->db->join('sa_works as e', 'e.work_qst_id = b.qst_id', 'left');
+		$this->db->where('bid_user_id', $user_id);
+		$this->db->where('qst_completed', "0");
+		$query = $this->db->get();
+		return $query->num_rows();
+    }
+	public function get_proposals($user_id, $order=null, $order_type='Asc', $limit_start, $limit_end)
+    {
+		$this->db->select('*');
+		$this->db->from('sa_questions as a');
+		$this->db->join('sa_subjects as b', 'b.sub_id = a.qst_subject', 'left');
+		$this->db->join('sa_subcategory as c', 'c.subcat_id = a.qst_subcategory', 'left');
+		$this->db->join('sa_biddings as d', 'd.bid_qst_id = a.qst_id');
+		$this->db->join('sa_users as e', 'e.user_id = d.bid_user_id');
+		$this->db->join('sa_works as f', 'f.work_qst_id = a.qst_id', 'left');
+		if($order){
+			$this->db->order_by($order, $order_type);
+		}else{
+		    $this->db->order_by('bid_id', 'Desc');
+		}
+		$this->db->limit($limit_start, $limit_end);
+		$this->db->where('qst_user_id', $user_id);
+		$this->db->where('qst_status !=', '0');
+		$this->db->where('bid_status !=', '0');
+		$this->db->where('qst_completed', "0");
+		$query = $this->db->get();
+		return $query->result_array(); 	
+    }
+	function count_proposals($user_id)
+    {
+		$this->db->select('*');
+		$this->db->from('sa_questions as a');
+		$this->db->join('sa_subjects as b', 'b.sub_id = a.qst_subject', 'left');
+		$this->db->join('sa_subcategory as c', 'c.subcat_id = a.qst_subcategory', 'left');
+		$this->db->join('sa_biddings as d', 'd.bid_qst_id = a.qst_id');
+		$this->db->join('sa_users as e', 'e.user_id = d.bid_user_id');
+		$this->db->join('sa_works as f', 'f.work_qst_id = a.qst_id', 'left');
+		$this->db->where('qst_user_id', $user_id);
+		$this->db->where('qst_status !=', '0');
+		$this->db->where('bid_status !=', '0');
+		$this->db->where('qst_completed', "0");
+		$query = $this->db->get();
+		return $query->num_rows();
+    }
+	public function get_works($user_id, $user_type)
+    {
+		$this->db->select('*');
+		$this->db->from('sa_works as a');
+		$this->db->join('sa_questions as b', 'b.qst_id = a.work_qst_id');
+		$this->db->join('sa_biddings as c', 'c.bid_id = a.work_bid_id');
+		$this->db->join('sa_subjects as d', 'd.sub_id = b.qst_subject', 'left');
+		$this->db->join('sa_subcategory as e', 'e.subcat_id = b.qst_subcategory', 'left');
+		$this->db->order_by('work_id', 'Desc');
+		if($user_type != 'student'){
+			$this->db->join('sa_users as f', 'f.user_id = a.work_student_id');
+			$this->db->where('work_expert_id', $user_id);
+			$this->db->where('work_status !=', '0');
+			$this->db->where('qst_status !=', '0');
+		//	$this->db->where('qst_completed', "0");
+		}else{
+			$this->db->join('sa_users as f', 'f.user_id = a.work_expert_id');
+			$this->db->where('work_student_id', $user_id);
+			$this->db->where('work_status !=', '0');
+			$this->db->where('qst_status !=', '0');	
+			$this->db->where('qst_completed', "0");		
+		}
+		$query = $this->db->get();
+		return $query->result_array(); 	
+    }
+	public function get_works_limit($user_id, $user_type, $order=null, $order_type='Asc', $limit_start, $limit_end)
+    {
+		$this->db->select('*');
+		$this->db->from('sa_works as a');
+		$this->db->join('sa_questions as b', 'b.qst_id = a.work_qst_id');
+		$this->db->join('sa_biddings as c', 'c.bid_id = a.work_bid_id');
+		$this->db->join('sa_subjects as d', 'd.sub_id = b.qst_subject', 'left');
+		$this->db->join('sa_subcategory as e', 'e.subcat_id = b.qst_subcategory', 'left');
+		$this->db->order_by('work_id', 'Desc');
+		if($user_type != 'student'){
+			$this->db->join('sa_users as f', 'f.user_id = a.work_student_id');
+			$this->db->where('work_expert_id', $user_id);
+			$this->db->where('work_status !=', '0');
+			$this->db->where('qst_status !=', '0');
+			//$this->db->where('qst_completed', "0");
+		}else{
+			$this->db->join('sa_users as f', 'f.user_id = a.work_expert_id');
+			$this->db->where('work_student_id', $user_id);
+			$this->db->where('work_status !=', '0');
+			$this->db->where('qst_status !=', '0');	
+			$this->db->where('qst_completed', "0");		
+		}
+		if($order){
+			$this->db->order_by($order, $order_type);
+		}else{
+		    $this->db->order_by('bid_id', 'Desc');
+		}
+		$this->db->limit($limit_start, $limit_end);
+		$query = $this->db->get();
+		return $query->result_array(); 	
+    }
+	function count_works($user_id, $user_type)
+    {
+		$this->db->select('*');
+		$this->db->from('sa_works as a');
+		$this->db->join('sa_questions as b', 'b.qst_id = a.work_qst_id');
+		$this->db->join('sa_biddings as c', 'c.bid_id = a.work_bid_id');
+		$this->db->join('sa_subjects as d', 'd.sub_id = b.qst_subject', 'left');
+		$this->db->join('sa_subcategory as e', 'e.subcat_id = b.qst_subcategory', 'left');
+		if($user_type != 'student'){
+			$this->db->join('sa_users as f', 'f.user_id = a.work_student_id');
+			$this->db->where('work_expert_id', $user_id);
+			$this->db->where('work_status !=', '0');
+			$this->db->where('qst_status !=', '0');
+		//	$this->db->where('qst_completed', "0");
+		}else{
+			$this->db->join('sa_users as f', 'f.user_id = a.work_expert_id');
+			$this->db->where('work_student_id', $user_id);		
+			$this->db->where('work_status !=', '0');
+			$this->db->where('qst_status !=', '0');
+			$this->db->where('qst_completed', "0");
+		}
+		$query = $this->db->get();
+		return $query->num_rows();
+    }
+	
+	public function get_solutions($user_id, $order=null, $order_type='Asc', $limit_start, $limit_end)
+    {
+		$this->db->select('*');
+		$this->db->from('sa_works as a');
+		$this->db->join('sa_questions as b', 'b.qst_id = a.work_qst_id');
+		$this->db->join('sa_biddings as c', 'c.bid_id = a.work_bid_id');
+		$this->db->join('sa_subjects as d', 'd.sub_id = b.qst_subject', 'left');
+		$this->db->join('sa_subcategory as e', 'e.subcat_id = b.qst_subcategory', 'left');
+		$this->db->order_by('work_id', 'Desc');
+		$this->db->where('work_expert_id', $user_id);
+		$this->db->where('work_status !=', '0');
+		$this->db->where('qst_status !=', '0');			
+		$this->db->where('qst_completed !=', '0');			
+		
+		if($order){
+			$this->db->order_by($order, $order_type);
+		}else{
+		    $this->db->order_by('bid_id', 'Desc');
+		}
+		$this->db->limit($limit_start, $limit_end);
+		$query = $this->db->get();
+		return $query->result_array(); 	
+    }
+	function count_solutions($user_id)
+    {
+		$this->db->select('*');
+		$this->db->from('sa_works as a');
+		$this->db->join('sa_questions as b', 'b.qst_id = a.work_qst_id');
+		$this->db->join('sa_biddings as c', 'c.bid_id = a.work_bid_id');
+		$this->db->join('sa_subjects as d', 'd.sub_id = b.qst_subject', 'left');
+		$this->db->join('sa_subcategory as e', 'e.subcat_id = b.qst_subcategory', 'left');
+		$this->db->where('work_expert_id', $user_id);
+		$this->db->where('work_status !=', '0');
+		$this->db->where('qst_status !=', '0');			
+		$this->db->where('qst_completed !=', '0');	
+		$query = $this->db->get();
+		return $query->num_rows();
+    }
+	
+    /**
+    * Store the new item into the database
+    * @param array $data - associative array with data to store
+    * @return boolean 
+    */
+    function create_question($data)
+    {
+		$insert = $this->db->insert('sa_questions', $data);
+	    return $insert;
+	}
+	
+	function create_solution($data)
+    {
+		$insert = $this->db->insert('sa_solutions', $data);
+	    return $insert;
+	}
+	 function update_paper_details($qst_id, $expert_id, $data)
+    {
+		$this->db->where('sol_qst_id', $qst_id);
+		$this->db->where('sol_expert_id', $expert_id);
+		$this->db->set('sol_updated_num', 'sol_updated_num+1', FALSE);
+		$report = $this->db->update('sa_solutions', $data);
+		return $report;
+	}
+	public function get_paper_details($qst_id, $expert_id)
+    {
+		$this->db->select('*');
+		$this->db->from('sa_solutions');
+		$this->db->where('sol_qst_id', $qst_id);
+		$this->db->where('sol_expert_id', $expert_id);
+		$query = $this->db->get();
+		return $query->result_array(); 	
+    }
+  /**   
+   * Update product
+    * @param array $data - associative array with data to store
+    * @return boolean
+    */
+    function update_question_details($qst_id, $user_id, $data)
+    {
+		$this->db->where('qst_id', $qst_id);
+		$this->db->where('qst_user_id', $user_id);
+		$this->db->set('qst_updated_num', 'qst_updated_num+1', FALSE);
+		$report = $this->db->update('sa_questions', $data);
+		return $report;
+	}
+	///////// Attachments
+	
+	  function add_attachments($data)
+    {
+		$insert = $this->db->insert('sa_attachments', $data);
+	    return $insert;
+	}
+	public function get_attachments($id, $attach_type)
+    {
+		$this->db->select('*');
+		$this->db->from('sa_attachments');
+		if($attach_type == 'question') 
+			$this->db->where('attach_qst_id', $id);
+		else
+			$this->db->where('attach_sol_id', $id);
+		$this->db->where('attach_type', $attach_type);
+		$query = $this->db->get();
+		return $query->result_array(); 	
+    }
+	function delete_attachments($attach_id, $user_id){
+		$this->db->where('attach_id', $attach_id);
+		$this->db->where('attach_user_id', $user_id);
+		return $this->db->delete('sa_attachments'); 
+	}
+	 public function get_solution_insert_id($array)
+    {
+		$this->db->select('sa_solutions.sol_id');
+		$this->db->from('sa_solutions');
+		$this->db->where($array);
+		$query = $this->db->get();
+		return $query->result_array(); 	
+    }
+}
+?>
